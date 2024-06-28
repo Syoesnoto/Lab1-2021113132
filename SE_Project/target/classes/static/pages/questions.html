@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>题库页</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 顶部工具栏样式 */
+        .toolbar {
+            background-color: #4FB0FF;
+            padding: 20px;
+            display: flex; /* 使用弹性盒子布局 */
+            align-items: center; /* 垂直居中 */
+            justify-content: space-between; /* 左右对齐，项目之间平均分配空间 */
+        }
+
+        .toolbar h1 {
+            margin: 0;
+        }
+
+        .toolbar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex; /* 使用弹性盒子布局 */
+        }
+
+        .toolbar li {
+            margin-left: 80px; /* 调整功能选项的左边距 */
+        }
+
+        /* 修改功能选项的样式 */
+        .toolbar li a {
+            padding: 8px 12px; /* 设置内边距 */
+            border-radius: 4px; /* 设置圆角 */
+            text-decoration: none; /* 去除下划线 */
+            color: black; /* 设置文字颜色为白色 */
+            font-size: 24px;
+        }
+
+        /* 页面布局样式 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex; /* 使用弹性盒子布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center; /* 水平居中 */
+            height: 70vh; /* 设置容器高度为视窗高度 */
+            font-size: 20px;
+        }
+
+        table {
+            font-family: Arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .bottom-button {
+            position: sticky;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body onload="requestData()">
+<div class="toolbar">
+    <h1>题库管理与在线考试系统</h1>
+    <nav>
+        <ul>
+            <li><a href="home.html">首页</a></li>
+            <li><a href="questions.html">题库</a></li>
+            <li><a href="compose.html">组卷</a></li>
+            <li><a href="myexams.html">答题</a></li>
+            <li><a href="judgePapers.html">阅卷</a></li>
+            <li><a href="user.html">个人中心</a></li>
+        </ul>
+    </nav>
+</div>
+<!-- <div class="container"> -->
+<div>
+    <table id="questionList">
+        <tbody>
+        <tr>
+            <td><strong>题目</strong></td>
+            <td><strong>类型</strong></td>
+            <td><strong>操作</strong></td>
+        </tr>
+        </tbody>
+    </table>
+    <h1></h1>
+    <!-- 添加按钮 -->
+    <button class="bottom-button" onclick="add()">添加题目</button>
+</div>
+<script th:inline="javascript">
+    function requestData(){
+        $.ajax({
+            url: "/questions/search",
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                showQuestions(data);
+            }
+        })
+    }
+
+    var userType = localStorage.getItem("userType");
+    var userPermission = localStorage.getItem("userPermission");
+
+    function showQuestions(data){
+        if(userType == "admin" || (userType == "teacher" && userPermission == "true")){
+            //document.getElementById("questionList").innerHTML = "这是题库";
+            var str = "";
+            //定义用于拼接的字符串
+            for (var i = 0; i < data.length; i++) {
+                var classify;
+                if(data[i].type == "true_false")    classify = "判断题";
+                else if(data[i].type == "choice")    classify = "选择题";
+                else    classify = "简答题";
+                //拼接表格的行和列
+                var question = data[i].question;
+                var answer = data[i].answer;
+                var type = data[i].type;
+                var difficulty = data[i].difficulty;
+                var knowledge = data[i].knowledge;
+                str = "<tr><td>" + data[i].question.substring(0, 70) + "</td><td>" + classify + "</td><td>"
+                    + "<button onclick=\"modify(\'" + question + "\',\'" + answer + "\',\'" + type + "\',\'" + difficulty + "\',\'" + knowledge + "\')\">修改</button> "
+                    + "<button onclick=\"remove(\'" + question + "\')\">删除</button>" + "</td></tr>";
+                //追加到table中
+                $("#questionList").append(str);
+            }
+        }
+        else{
+            //document.getElementById("questionList").innerHTML = "您没有查看题库的权限！";
+        }
+    }
+
+    function add(){
+        if(userType === "admin" || (userType === "teacher" && userPermission === "true")){
+            $.ajax({
+                async: false,
+                success: function() {
+                    localStorage.setItem("question", "");
+                    localStorage.setItem("answer", "");
+                    localStorage.setItem("type", "choice");
+                    localStorage.setItem("difficulty", "easy");
+                    localStorage.setItem("knowledge", "");
+                    var url = "questionDetails.html"; // 要在新窗口中打开的 URL
+                    var windowName = "添加题目"; // 新窗口的名称，可以自定义
+                    var windowFeatures = "width=1000,height=600,left=" + (window.innerWidth / 2 - 500)
+                        + ",top=" + (window.innerHeight / 2 - 300); // 新窗口的尺寸和位置
+                    // 使用 window.open() 方法打开新窗口
+                    let newPage = window.open(url, windowName, windowFeatures);
+                    newPage.location.reload(true);
+                },
+                error: function(xhr, status, error) {
+                    // 请求错误处理
+                    console.log(error);
+                    alert("error");
+                }
+            })
+        }
+        else{}
+    }
+
+    function modify(question, answer, type, difficulty, knowledge){
+        $.ajax({
+            async: false,
+            success: function() {
+                localStorage.setItem("question", question);
+                localStorage.setItem("answer", answer);
+                localStorage.setItem("type", type);
+                localStorage.setItem("difficulty", difficulty);
+                localStorage.setItem("knowledge", knowledge);
+                var url = "questionDetails.html"; // 要在新窗口中打开的 URL
+                var windowName = "修改题目"; // 新窗口的名称，可以自定义
+                var windowFeatures = "width=1000,height=600,left=" + (window.innerWidth / 2 - 500)
+                    + ",top=" + (window.innerHeight / 2 - 300); // 新窗口的尺寸和位置
+                // 使用 window.open() 方法打开新窗口
+                let newPage = window.open(url, windowName, windowFeatures);
+                newPage.location.reload(true);
+            },
+            error: function(xhr, status, error) {
+                // 请求错误处理
+                console.log(error);
+                alert("error");
+            }
+        })
+    }
+
+    function remove(question){
+        $.ajax({
+            method: "post",
+            url: "/questions/remove",  // 服务器端API的URL
+            data: { // 提交数据
+                "question": question
+            },
+            async: false,
+            success: function() {
+                alert("删除成功");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                // 请求错误处理
+                console.log(error);
+                alert("error");
+            }
+        })
+    }
+</script>
+</body>
+</html>

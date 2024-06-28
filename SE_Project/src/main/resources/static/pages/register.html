@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册页</title>
+    <link href="../css/register.css" rel="stylesheet"/>
+    <script type="text/javascript" src="../js/user.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .button {
+            margin-top: 10px;
+            width: 100%;
+            background-color: #ff6347;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+    <style>
+        select {
+            background-color: #f2f2f2;
+            border: 2px solid #ccc;
+            color: #333;
+            font-family: Arial, sans-serif;
+            font-size: 17px;
+            padding: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="container">
+        <h1>注册</h1>
+        <form name="f">
+            <label for="username">用户名</label>
+            <input type="text" id="username" required>
+            <label for="usertype">用户类型</label>
+            <select name="usertype" id="usertype">
+                <option value="admin">管理员</option>
+                <option value="teacher">老师</option>
+                <option value="student">学生</option>
+            </select>
+            <label for="password">密码</label>
+            <input type="password" id="password" required>
+            <label for="confirm-password">确认密码</label>
+            <input type="password" id="confirm-password" required>
+            <button class="button" id="getDataButton">注册</button>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $("#getDataButton").click(function() {
+            var username = $("#username").val();
+            var usertype = $("#usertype").val();
+            var password = $("#password").val();
+            var conpwd = $("#confirm-password").val();
+            $.ajax({
+                url: "/user/register",  // 服务器端API的URL
+                data: { // 提交数据
+                    "username": username, // 前者为字段名，后者为数据
+                    "usertype": usertype,
+                    "password": password,
+                    "confirm-password": conpwd
+                },
+                method: "POST",
+                async: false,
+                success: function(data) {
+                    if (data == 3) {
+                        // 注册成功
+                        alert("注册成功！");
+                        window.document.f.action = "login.html"; // 设置登录后跳转页面
+                        window.document.f.submit();
+                    } else if (data == 1) {
+                        //密码设置错误
+                        alert("两次输入的密码不一致!");
+                    } else {
+                        // 注册失败
+                        alert("用户名已注册！");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // 请求错误处理
+                    console.log(error);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

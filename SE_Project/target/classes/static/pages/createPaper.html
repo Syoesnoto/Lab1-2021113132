@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新建试卷页</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 页面布局样式 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex; /* 使用弹性盒子布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center; /* 水平居中 */
+            height: 70vh; /* 设置容器高度为视窗高度 */
+            font-size: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            font-family: Arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .bottom-button1 {
+            position: sticky;
+            left: 45%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .bottom-button2 {
+            position: sticky;
+            left: 55%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body onload="requestData()">
+<div>
+    <h1 id="paperName"></h1>
+    <table id="questionList">
+        <tbody>
+        <tr>
+            <td><strong>题目</strong></td>
+            <td><strong>类型</strong></td>
+            <td><strong>知识点</strong></td>
+            <td><strong>操作</strong></td>
+        </tr>
+        </tbody>
+    </table>
+    <h1></h1>
+    <!-- 查看试卷预览按钮 -->
+    <button class="bottom-button1" onclick="check()">查看试卷</button>
+    <button class="bottom-button2" onclick="shut()">确认组卷</button>
+</div>
+<script th:inline="javascript">
+    function requestData(){
+        document.getElementById("paperName").innerHTML = localStorage.getItem("paperName");
+        $.ajax({
+            url: "/questions/search",
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                showQuestions(data);
+            }
+        })
+    }
+
+    function check(){
+        $.ajax({
+            async: false,
+            success: function() {
+                let newPage = window.open("paperDetails.html");
+                newPage.location.reload(true);
+            },
+            error: function(xhr, status, error) {
+                // 请求错误处理
+                console.log(error);
+                alert("error");
+            }
+        })
+    }
+
+    function shut(){
+        alert("组卷成功");
+        window.close();
+    }
+
+    function showQuestions(data){
+        var userType = localStorage.getItem("userType");
+        if(userType != "admin"){
+            //document.getElementById("questionList").innerHTML = "您没有组卷的权限！";
+        }
+        else{
+            //document.getElementById("questionList").innerHTML = "组卷";
+            var str = "";
+            //定义用于拼接的字符串
+            for (var i = 0; i < data.length; i++) {
+                var classify;
+                if(data[i].type == "true_false")    classify = "判断题";
+                else if(data[i].type == "choice")    classify = "选择题";
+                else    classify = "简答题";
+
+                var question = data[i].question;
+                var answer = data[i].answer;
+                var type = data[i].type;
+                var difficulty = data[i].difficulty;
+                var knowledge = data[i].knowledge;
+
+                //拼接表格的行和列
+                str = "<tr><td>" + question.substring(0, 50) + "</td><td>" + classify + "</td><td>" + knowledge + "</td><td>"
+                    + "<button onclick=\"showDetails(\'" + question + "\',\'" + answer + "\',\'" + type + "\',\'" + difficulty
+                    + "\',\'" + knowledge + "\')\">查看题目</button> " + "  "
+                    + "<input type=\"button\" id=\"myButton" + i + "\" onclick=\"handleButton(\'" + question + "\', \'" + i + "\')\">"
+                    + "</td></tr>";
+                //追加到table中
+                $("#questionList").append(str);
+                if(localStorage.getItem("flag") === "true")  document.getElementById("myButton" + i).value = "添加题目";
+            }
+            localStorage.setItem("flag", "false");
+        }
+    }
+
+    function showDetails(question, answer, type, difficulty, knowledge){
+        localStorage.setItem("question", question);
+        localStorage.setItem("answer", answer);
+        localStorage.setItem("type", type);
+        localStorage.setItem("difficulty", difficulty);
+        localStorage.setItem("knowledge", knowledge);
+        var url = "readonlyQuestionDetails.html"; // 要在新窗口中打开的 URL
+        var windowName = "查看题目"; // 新窗口的名称，可以自定义
+        var windowFeatures = "width=1000,height=600,left=" + (window.innerWidth / 2 - 500)
+            + ",top=" + (window.innerHeight / 2 - 300); // 新窗口的尺寸和位置
+        // 使用 window.open() 方法打开新窗口
+        let newPage = window.open(url, windowName, windowFeatures);
+        newPage.location.reload(true);
+    }
+
+    function handleButton(question, i) {
+        var button = document.getElementById("myButton" + i);
+        var flag;
+        if (button.value === "添加题目") {
+            // 执行添加操作
+            // 这里可以写添加逻辑的代码
+            flag = addQuestion(question);
+            if(flag === 1)   button.value = "删除题目";
+        } else {
+            // 执行删除操作
+            // 这里可以写删除逻辑的代码
+            flag = removeQuestion(question);
+            if(flag === 1)   button.value = "添加题目";
+        }
+    }
+
+    var name = localStorage.getItem("paperName");
+
+    function addQuestion(question){
+        localStorage.setItem("score", prompt("请输入此题的分值："));
+        var flag = 0;
+        var score = localStorage.getItem("score");
+        if(score !== "null"){
+            $.ajax({
+                method: "post",
+                url: "/compose/add",  // 服务器端API的URL
+                data: { // 提交数据
+                    "name": name,
+                    "question": question,
+                    "score": score
+                },
+                async: false,
+                success: function() {
+                    alert("试题添加成功");
+                    flag = 1;
+                },
+                error: function(xhr, status, error) {
+                    // 请求错误处理
+                    console.log(error);
+                    alert("error");
+                }
+            })
+        }
+        return flag;
+    }
+
+    function removeQuestion(question){
+        var flag;
+        $.ajax({
+            method: "post",
+            url: "/exam/remove",  // 服务器端API的URL
+            data: { // 提交数据
+                "name": name,
+                "question": question
+            },
+            async: false,
+            success: function() {
+                alert("删除成功");
+                flag = 1;
+            },
+            error: function(xhr, status, error) {
+                // 请求错误处理
+                console.log(error);
+                alert("error");
+                flag = 0;
+            }
+        })
+        return flag;
+    }
+</script>
+</body>
+</html>

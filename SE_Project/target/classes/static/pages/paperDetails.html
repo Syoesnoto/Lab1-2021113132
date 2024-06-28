@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>试卷信息</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 样式可以根据需要进行自定义 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 80%; /* 修改为适当的宽度 */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            padding: 20px;
+            text-align: center;
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+    </style>
+</head>
+<body onload="requestData()">
+<div class="container">
+    <h1 id="paperName"></h1>
+    <table id="questionList">
+        <thead>
+        <tr>
+            <th>题号</th>
+            <th>题目</th>
+            <th>知识点</th>
+            <th>类型</th>
+            <th>难度</th>
+            <th>分值</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script th:inline="javascript">
+    function requestData() {
+        document.getElementById("paperName").innerHTML = localStorage.getItem("paperName");
+        $.ajax({
+            url: "/exam/open",
+            type: "post",
+            data: {
+                "name": localStorage.getItem("paperName")
+            },
+            dataType: "json",
+            success: function (data) {
+                showQuestions(data);
+            }
+        });
+    }
+
+    var userType = localStorage.getItem("userType");
+    var userPermission = localStorage.getItem("userPermission");
+
+    function showQuestions(data) {
+        if (userType === "admin") {
+            var str = "";
+            //定义用于拼接的字符串
+            for (var i = 0; i < data.length; i++) {
+
+                var classify;
+                if (data[i].type === "true_false") classify = "判断题";
+                else if (data[i].type === "choice") classify = "选择题";
+                else classify = "简答题";
+
+                var difficulty;
+                if (data[i].question.difficulty === "easy") difficulty = "简单";
+                else if (data[i].question.difficulty === "medium") difficulty = "中等";
+                else difficulty = "困难";
+
+                var question = data[i].question.question;
+                var answer = data[i].question.answer;
+                var type = data[i].type;
+                var difficulty = data[i].question.difficulty;
+                var knowledge = data[i].question.knowledge;
+                var score = data[i].score;
+
+                //拼接表格的行和列
+                str = "<tr><td>" + (i + 1) + "</td><td>" + question.substring(0, 30) + "</td><td>"
+                    + knowledge.substring(0, 20) + "</td><td>" + classify + "</td><td>" + difficulty
+                    + "</td><td>" + score + "</td><td>"
+                    + "<button onclick=\"showDetails(\'" + question + "\',\'" + answer + "\',\'"
+                    + type + "\',\'" + difficulty + "\',\'" + knowledge + "\')\">查看</button> "
+                    + "</td></tr>";
+                //追加到table中
+                $("#questionList tbody").append(str);
+            }
+        } else {
+            // Handle user-specific layout or actions here
+        }
+    }
+
+    function showDetails(question, answer, type, difficulty, knowledge){
+        localStorage.setItem("question", question);
+        localStorage.setItem("answer", answer);
+        localStorage.setItem("type", type);
+        localStorage.setItem("difficulty", difficulty);
+        localStorage.setItem("knowledge", knowledge);
+        var url = "readonlyQuestionDetails.html"; // 要在新窗口中打开的 URL
+        var windowName = "查看题目"; // 新窗口的名称，可以自定义
+        var windowFeatures = "width=1000,height=600,left=" + (window.innerWidth / 2 - 500)
+            + ",top=" + (window.innerHeight / 2 - 300); // 新窗口的尺寸和位置
+        // 使用 window.open() 方法打开新窗口
+        let newPage = window.open(url, windowName, windowFeatures);
+        newPage.location.reload(true);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <style>
+        /* 顶部工具栏样式 */
+        .toolbar {
+            background-color: #4FB0FF;
+            padding: 20px;
+            display: flex; /* 使用弹性盒子布局 */
+            align-items: center; /* 垂直居中 */
+            justify-content: space-between; /* 左右对齐，项目之间平均分配空间 */
+        }
+
+        .toolbar h1 {
+            margin: 0;
+        }
+
+        .toolbar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex; /* 使用弹性盒子布局 */
+        }
+
+        .toolbar li {
+            margin-left: 80px; /* 调整功能选项的左边距 */
+        }
+
+        /* 修改功能选项的样式 */
+        .toolbar li a {
+            padding: 8px 12px; /* 设置内边距 */
+            border-radius: 4px; /* 设置圆角 */
+            text-decoration: none; /* 去除下划线 */
+            color: black; /* 设置文字颜色为白色 */
+            font-size: 24px;
+        }
+
+        /* 页面布局样式 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex; /* 使用弹性盒子布局 */
+            flex-direction: column; /* 垂直方向排列 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center; /* 水平居中 */
+            height: 70vh; /* 设置容器高度为视窗高度 */
+            font-size: 32px;
+        }
+    </style>
+</head>
+<body onload="load_data()">
+<div class="toolbar">
+    <h1>题库管理与在线考试系统</h1>
+    <nav>
+        <ul>
+            <li><a href="home.html">首页</a></li>
+            <li><a href="questions.html">题库</a></li>
+            <li><a href="compose.html">组卷</a></li>
+            <li><a href="myexams.html">答题</a></li>
+            <li><a href="judgePapers.html">阅卷</a></li>
+            <li><a href="user.html">个人中心</a></li>
+        </ul>
+    </nav>
+</div>
+<div class="container">
+    <h2 id="userHello"></h2>
+    <!-- 这里可以添加其他内容 -->
+</div>
+<script type="text/javascript">
+    //页面刚加载的时候，开始判断，如果有用户名，就显示在页面上，如果没有用户名的话，就显示登录名称
+    function load_data(){
+        document.getElementById("userHello").innerHTML = localStorage.getItem("userName") + "，欢迎光临！";
+    }
+</script>
+</body>
+</html>
